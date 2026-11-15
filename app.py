@@ -8,7 +8,7 @@ from pathlib import Path
 import json
 import sys
 from dialog_locations import DialogLocations
-from plot_labels import lab_label, lightness_limits, tick_label
+from plot_labels import PROFILE_COLOURS, lab_label, lightness_limits, opponent_ticks, tick_label
 import tkinter as tk
 from tkinter import filedialog, messagebox, ttk
 
@@ -17,7 +17,7 @@ from profile_analysis import (INTENTS, analyse, chroma, curve_series, hue_sector
                               metadata, source_ramps)
 
 MODES = [*INTENTS, 'sRGB to profile: perceptual', 'sRGB to profile: relative + BPC']
-COLOURS = ['#008478', '#7350b4']
+COLOURS = PROFILE_COLOURS
 LEVELS = range(10, 100, 10)
 UNKNOWN_REFERENCE = "Unknown reference"
 
@@ -53,6 +53,10 @@ def calculate(paths, reference_path, relationship, mode):
         if reference and info['colour_space'] == 'RGB ':
             try:
                 profile['measurement_fit'] = measurement_fit(data, reference)
+                profile['measurement_fit']['reference'] = {
+                    'file': reference['file'], 'sha256': reference['sha256'],
+                    'space': reference['space'], 'declared_relationship': relationship,
+                }
             except (OSError, ValueError) as error:
                 profile['measurement_error'] = str(error)
     return profiles, ({key: value for key, value in reference.items() if key not in ('rgb', 'lab')}
@@ -297,6 +301,7 @@ class Analyzer:
             if r['total_ink_limit_percent']:
                 lines.append('CMYK sampling uses a 300% total ink cap. The black point uses pure K.')
             if m := p.get('measurement_fit'):
+                lines.append(f'Profile {letter} compared with {Path(m["reference"]["file"]).name} in absolute Lab D50.')
                 lines.append(f'ΔE00 for {m["count"]} patches: mean {m["mean"]:.2f} · p95 {m["p95"]:.2f} · max {m["max"]:.2f}')
                 if white := m.get('measured_white'):
                     lines.append(f'Measured white  {lab_text(white)}')
@@ -354,10 +359,11 @@ class Analyzer:
         canvas.delete('all')
         subsets = [lightness_slice(p.get('result', {}).get('cloud', []), level) for p in self.profiles]
         extent = max(10, max((abs(v) for s in subsets for row in s for v in row[1:]), default=0) * 1.08)
+        ticks = opponent_ticks(extent)
         width, height = canvas.winfo_width(), canvas.winfo_height()
         half = max(1, min(width - 74, height - 60) / 2)
         x, y = axes(canvas, width/2-half, height/2+half, 2*half, 2*half,
-                    (-extent,extent), (-extent,extent), 'a*', 'b*')
+                    (ticks[0], ticks[-1]), (ticks[0], ticks[-1]), 'a*', 'b*', ticks)
         lines = []
         for i, s in enumerate(subsets):
             hue = hue_sectors(s, level)
@@ -365,7 +371,7 @@ class Analyzer:
             # Draw only one marker per screen pixel.
             pixels = {(round(x(a)), round(y(b))) for _,a,b in s}
             for px,py in pixels:
-                canvas.create_oval(px-1,py-1,px+1,py+1,fill=COLOURS[i],outline='')
+                canvas.create_rectangle(px,py,px+1,py+1,fill=COLOURS[i],outline='')
             if len(subsets)==2 and i==1:
                 first = hue_sectors(subsets[0],level)
                 diffs = [(b-a,j) for j,(a,b) in enumerate(zip(first,hue)) if a is not None and b is not None]
@@ -413,7 +419,7 @@ class Analyzer:
             for k,v in enumerate([*series,None]):
                 if v is None or (previous is not None and metric=='Hue h°' and abs(v-previous)>180):
                     if len(coords)>=4:
-                        canvas.create_line(*coords,fill=COLOURS[i],width=2,dash=(5,3) if j else ())
+                        canvas.create_line(*coords,fill=COLOURS[i],width=1,dash=(5,3) if j else ())
                     coords=[]
                 if v is not None:
                     coords.extend((x(100*k/(len(series)-1)),y(v)))
@@ -480,14 +486,15 @@ def lab_text(lab):
     return f'L* {lab_label(lab[0])}   a* {lab_label(lab[1], signed=True)}   b* {lab_label(lab[2], signed=True)}'
 
 
-def axes(c,left,bottom,width,height,xs,ys,xlabel,ylabel):
+def axes(c,left,bottom,width,height,xs,ys,xlabel,ylabel,opponent_grid=None):
     def x(v): return left+width*(v-xs[0])/(xs[1]-xs[0])
     def y(v): return bottom-height*(v-ys[0])/(ys[1]-ys[0])
-    for k in range(6):
-        xv=xs[0]+(xs[1]-xs[0])*k/5
-        yv=ys[0]+(ys[1]-ys[0])*k/5
-        c.create_line(x(xv),bottom,x(xv),bottom-height,fill='#e2e8f0')
-        c.create_line(left,y(yv),left+width,y(yv),fill='#e2e8f0')
+    pairs = (zip(opponent_grid, opponent_grid) if opponent_grid else
+             ((xs[0]+(xs[1]-xs[0])*k/5, ys[0]+(ys[1]-ys[0])*k/5) for k in range(6)))
+    for xv, yv in pairs:
+        grid = '#94a3b8' if opponent_grid and xv == 0 else '#e2e8f0'
+        c.create_line(x(xv),bottom,x(xv),bottom-height,fill=grid)
+        c.create_line(left,y(yv),left+width,y(yv),fill=grid)
         c.create_text(x(xv),bottom+12,text=tick_label(xv),fill='#334155')
         c.create_text(left-7,y(yv),text=tick_label(yv),anchor='e',fill='#334155')
     c.create_text(left+width/2,bottom+28,text=xlabel,fill='#152638')

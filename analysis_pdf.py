@@ -15,13 +15,13 @@ from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.platypus import Flowable, LongTable, PageBreak, Paragraph, SimpleDocTemplate, TableStyle
 
-from plot_labels import lightness_limits, tick_label
+from plot_labels import PROFILE_COLOURS, lightness_limits, opponent_ticks, tick_label
 from profile_analysis import curve_series, lightness_slice
 
 INK = colors.HexColor('#182c40')
 GRID = colors.HexColor('#d9e3ec')
 PALE = colors.HexColor('#eff5f8')
-TRACE = (colors.HexColor('#008478'), colors.HexColor('#7350b4'))
+TRACE = tuple(colors.HexColor(colour) for colour in PROFILE_COLOURS)
 METRICS = ('L*', 'a* and b*', 'Chroma C*', 'Hue h°', 'Step ΔE76')
 pdfmetrics.registerFont(TTFont('DejaVu', str(Path(__file__).resolve().parent / 'resources/DejaVuSans.ttf')))
 BODY = ParagraphStyle('body', fontName='DejaVu', fontSize=9.0, leading=13, textColor=INK, spaceAfter=3, splitLongWords=True)
@@ -46,7 +46,30 @@ def fmt(number):
     return '-' if number is None else f'{number:.2f}'
 
 
-def draw_axes(c, x, y, width, height, xlim, ylim, title, x_label, divisions=4):
+def profile_key(c, right, y, profiles, *, components=False, points=False):
+    c.setFont('Helvetica', 7)
+    for index in reversed(sorted(profiles)):
+        c.setStrokeColor(TRACE[index])
+        c.setFillColor(TRACE[index])
+        c.setLineWidth(.55)
+        letter = 'AB'[index]
+        if components:
+            entries = ((f'{letter} b*', [3, 2]), (f'{letter} a*', []))
+        else:
+            entries = ((f'Profile {letter}', []),)
+        for label, dash in entries:
+            c.drawRightString(right, y, label)
+            end = right - pdfmetrics.stringWidth(label, 'Helvetica', 7) - 4
+            if points:
+                c.rect(end-3, y+2, 1.5, 1.5, stroke=0, fill=1)
+            else:
+                c.setDash(dash)
+                c.line(end-13, y+2, end, y+2)
+            right = end-18
+    c.setDash([])
+
+
+def draw_axes(c, x, y, width, height, xlim, ylim, title, x_label, divisions=4, opponent_grid=None):
     def xp(v):
         return x + width * (v - xlim[0]) / (xlim[1] - xlim[0])
 
@@ -55,10 +78,11 @@ def draw_axes(c, x, y, width, height, xlim, ylim, title, x_label, divisions=4):
 
     c.setLineWidth(.4)
     c.setFont('Helvetica', 7)
-    for i in range(divisions + 1):
-        xv = xlim[0] + (xlim[1]-xlim[0]) * i/divisions
-        yv = ylim[0] + (ylim[1]-ylim[0]) * i/divisions
-        c.setStrokeColor(GRID)
+    pairs = (zip(opponent_grid, opponent_grid) if opponent_grid else
+             ((xlim[0]+(xlim[1]-xlim[0])*i/divisions, ylim[0]+(ylim[1]-ylim[0])*i/divisions)
+              for i in range(divisions + 1)))
+    for xv, yv in pairs:
+        c.setStrokeColor(colors.HexColor('#94a3b8') if opponent_grid and xv == 0 else GRID)
         c.line(xp(xv), y, xp(xv), y+height)
         c.line(x, yp(yv), x+width, yp(yv))
         c.setFillColor(INK)
@@ -91,7 +115,8 @@ class RampCharts(Flowable):
             else:
                 limits = (min(0, min(values)), max(.01, max(values)))
             x, y = 34 + (index % 2)*239, 343 - (index//2)*150
-            xp, yp = draw_axes(self.canv,x,y,190,107,(0,100),limits,metric,'Ramp position (%)', divisions=5 if metric == 'L*' else 4)
+            height = 107
+            xp, yp = draw_axes(self.canv,x,y,190,height,(0,100),limits,metric,'Ramp position (%)', divisions=5 if metric == 'L*' else 4)
             for i, component, series in traces:
                 path = self.canv.beginPath()
                 previous = None
@@ -106,10 +131,13 @@ class RampCharts(Flowable):
                         path.lineTo(xx, yy)
                     previous = value
                 self.canv.setStrokeColor(TRACE[i])
-                self.canv.setLineWidth(1)
+                self.canv.setLineWidth(.55)
                 self.canv.setDash([3,2] if component else [])
                 self.canv.drawPath(path)
             self.canv.setDash([])
+            profile_key(self.canv, x+190, y+height+8
+                        if metric != 'a* and b*' else y+height+19,
+                        {i for i, _, _ in traces}, components=metric == 'a* and b*')
 
 
 class GamutCharts(Flowable):
@@ -123,17 +151,19 @@ class GamutCharts(Flowable):
         groups = [[lightness_slice(cloud, level) for cloud in self.clouds] for level in self.levels]
         bound = max(5, max((abs(v) for group in groups for points in group
                            for row in points for v in row[1:]), default=0))
-        bound = 10 * (int(bound/10)+1)
+        ticks = opponent_ticks(bound)
+        limits = (ticks[0], ticks[-1])
         for index, (level, group) in enumerate(zip(self.levels, groups)):
             x, y = 30 + (index%3)*160, 370 - (index//3)*169
-            xp, yp = draw_axes(self.canv,x,y,109,109,(-bound,bound),(-bound,bound),f'L* {level} | b*','a*')
+            xp, yp = draw_axes(self.canv,x,y,109,109,limits,limits,f'L* {level} | b*','a*', opponent_grid=ticks)
+            profile_key(self.canv, x+109, y+128, {i for i, samples in enumerate(group) if samples}, points=True)
             for i, samples in enumerate(group):
                 self.canv.setFillColor(TRACE[i])
                 # Coalesce markers at print scale. Hue tables still use every sample.
                 points = {(2.5*round(xp(a)/2.5), 2.5*round(yp(b)/2.5)) for _,a,b in samples}
                 dots = self.canv.beginPath()
                 for px, py in sorted(points):
-                    dots.rect(px-.55,py-.55,1.1,1.1)
+                    dots.rect(px-.35,py-.35,.7,.7)
                 self.canv.drawPath(dots, stroke=0, fill=1)
             if not any(group):
                 self.canv.setFont('Helvetica', 8)
@@ -158,15 +188,21 @@ def save_analysis(path, profiles, reference, mode, summary, selected_level):
     for i, profile in enumerate(profiles):
         story.append(paragraph(f'Profile {"AB"[i]}: {Path(profile["path"]).name}'))
     if len(profiles)==2:
-        story.append(paragraph("Charts: Profile A (teal), Profile B (purple)."))
+        story.append(paragraph("Charts: Profile A (red), Profile B (blue)."))
     else:
-        story.append(paragraph('Charts: Profile A (teal).'))
+        story.append(paragraph('Charts: Profile A (red).'))
     for line in summary.splitlines():
         if line:
             story.append(paragraph(line, HEADING if line in ('Method and interpretation', 'Estimated gamut volume, B compared with A') else BODY))
     if reference:
+        story.append(paragraph('Measurement traceability', HEADING))
+        story.append(paragraph(f'Measurement file: {reference["file"]}'))
         story.append(paragraph(f'Measurement file SHA-256: {reference["sha256"]}'))
         story.append(paragraph(f'Measurement encoding: {reference["space"]}'))
+        story.append(paragraph(f'Declared relationship: {reference["relationship"]}'))
+        for i, profile in enumerate(profiles):
+            if 'measurement_fit' in profile:
+                story.append(paragraph(f'ICC SHA-256 for profile {"AB"[i]} compared with this file: {profile["info"]["sha256"]}'))
     if any('result' in p for p in profiles):
         levels = list(range(10,100,10))
         story.extend((PageBreak(), paragraph('Gamut by lightness', TITLE),

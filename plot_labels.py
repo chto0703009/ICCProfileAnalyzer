@@ -1,6 +1,15 @@
 # Copyright (c) 2026 Christer Törnkvist.
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Display formatting shared by the dashboard and the PDF charts."""
+from math import ceil
+
+
+PROFILE_COLOURS = ('#c62828', '#1565c0')
+
+
+def opponent_ticks(extent):
+    step = max(5, 5 * ceil(extent / 10))
+    return (-2 * step, -step, 0, step, 2 * step)
 
 
 def tick_label(value):

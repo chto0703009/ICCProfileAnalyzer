@@ -2,31 +2,31 @@
 
 <img src="resources/analyzer-header.png" alt="ICC Profile Analyzer app icon" width="72">
 
-Fristående macOS-app för numerisk utvärdering av ICC v2/v4. Öppna en profil och lägg vid behov till en andra för jämförelse. Appen läser profilerna och sparar analysen som en engelsk PDF-rapport eller en separat JSON-fil. Jämförelse och kurvor visas i samma engelskspråkiga fönster.
+A standalone macOS app for numerical analysis of ICC v2 and v4 profiles. Open one profile or compare two side by side. Export the analysis as an English PDF report or a JSON file.
 
-## Installera på macOS
+## Install on macOS
 
-Hämta [DMG-filen för Apple Silicon](https://github.com/chto0703009/ICCProfileAnalyzer/releases/latest), öppna den och dra appen till **Program**. Appen har engelska menyer. Klicka på **Quit** uppe till höger för att avsluta.
+Download the [Apple Silicon disk image](https://github.com/chto0703009/ICCProfileAnalyzer/releases/latest), open it, and drag the app to **Applications**.
 
-[Svensk PDF-guide](docs/ICC-Profile-Analyzer-SV.pdf) · [English PDF guide](docs/ICC-Profile-Analyzer-EN.pdf)
+[English PDF guide](docs/ICC-Profile-Analyzer-EN.pdf) · [Swedish PDF guide](docs/ICC-Profile-Analyzer-SV.pdf)
 
-- **Assessment** visar vit- och svartpunkt, tonomfång, uppskattad absolut och relativ gamutvolym och observationer om neutralitet och kurvjämnhet.
-- **Gamut by L*** visar modellens a*/b*-punkter vid vald ljushet. Vid jämförelse visas skillnad i största samplade kroma per nyanssektor.
-- **Curves and smoothness** visar L*, a*/b*, kroma, nyans och färgavstånd per steg. För perceptuell återgivning och relativ med svartpunktskompensation följer analysen kedjan sRGB → enhetsvärden → absolut Lab D50.
-- **ICC Tags** visar header, tagglista, datatyper, storlekar, positioner, kontrollsummor och läsbara text- och XYZ-fält.
-- **Open Measurements** jämför RGB-profiler mot en CGATS/TI3 med RGB 0–100 och Lab D50 eller XYZ D50 där Y=100 motsvarar referensvitt. Ange mätfilens relation till profilerna. ΔE00 redovisas som medel, p95 och max, med delresultat för skuggor och neutraler.
+- **Assessment** shows white and black points, lightness range, estimated absolute and relative gamut volumes, and observations about neutrality and curve smoothness.
+- **Gamut by L\*** plots the profile’s a\*/b\* samples at the selected lightness. When comparing profiles, it reports the difference in maximum sampled chroma by hue sector.
+- **Curves and smoothness** shows lightness, a\*/b\*, chroma, hue, and color difference between steps. In perceptual mode and relative mode with black point compensation, the analysis maps sRGB through device values to absolute Lab D50.
+- **ICC Tags** shows the header, tag types, sizes, offsets, checksums, and decoded text and XYZ fields.
+- **Open Measurements** compares RGB printer profiles with CGATS or TI3 data containing device RGB values from 0 to 100 and Lab D50 or XYZ D50 with reference-white Y = 100. Declare whether the data is for training or independent verification. Results include mean, p95, and maximum ΔE00, with separate statistics for shadows and near-neutral colors.
 
-Kurv- och gamutanalysen stöder enhetsprofiler för RGB, CMYK och gråskala. Övriga ICC v2/v4 visas som metadata. CMYK-samplingen begränsas till 300 % total färgmängd och den rapporterade svarta ändpunkten är rent K. Volymen är ett konvext hölje kring de samplade Lab-punkterna. Metoden kan överbrygga konkaviteter och kan ge andra volymtal än en metod som integrerar en detaljerad gamutgräns. Oberoende utskriftsmätning behövs för att bedöma träffsäkerhet.
+Curve and gamut analysis supports RGB, CMYK, and grayscale device profiles. Other ICC v2/v4 profiles are displayed as metadata. CMYK sampling uses a 300% total ink limit and reports pure K as the black endpoint. The gamut volume is estimated from a convex hull of the sampled Lab points, which can bridge concavities. Use independent print measurements to assess accuracy.
 
-**Save PDF** inkluderar bedömning, mätstatistik, L*-snitt, kurvor för valt återgivningsläge och ICC-taggar.
+**Save PDF** includes the assessment, measurement statistics, gamut slices, curves for the selected rendering mode, and ICC tags. Each chart has a color-matched legend. Measurement comparisons record the source file and checksums for traceability.
 
-Guiderna följer med i DMG-filen.
+The disk image includes both guides. File dialogs start on the Desktop and remember the last ICC, measurement, and export folders.
 
 Filväljarna börjar på skrivbordet. Appen minns senaste ICC-mapp (delad med jämförelsen), mätmapp och sparmapp mellan starter. Den första exporten föreslås i mappen för senast öppnade fil. PDF och JSON delar sparmapp.
 
-## Kör källkoden och bygg appen
+## Run from source and build the app
 
-Använd Python med Tkinter och LittleCMS 2. På Apple Silicon används här Homebrews LittleCMS-bibliotek. PyInstaller inkluderar det i appen.
+Use Python with Tkinter and LittleCMS 2. The Apple Silicon build uses Homebrew’s LittleCMS library and bundles it with PyInstaller.
 
 ```sh
 python3 -m venv .venv
@@ -39,7 +39,7 @@ python3 -m venv .venv
   --add-data LittleCMS-LICENSE.txt:. --add-data resources:resources app.py
 ```
 
-Kör testerna med `.venv/bin/python -m unittest`. Bygg om PDF-guiderna med `PYTHONPATH=. .venv/bin/python docs/build_guides.py`. Ikonen kan återskapas med `.venv/bin/python tools/build_icon.py` på macOS.
+Run the tests with `.venv/bin/python -m unittest`. Rebuild the PDF guides with `PYTHONPATH=. .venv/bin/python docs/build_guides.py`. On macOS, regenerate the icon with `.venv/bin/python tools/build_icon.py`.
 
 ## License
 
