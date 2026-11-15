@@ -20,6 +20,16 @@ Curve and gamut analysis supports RGB, CMYK, and grayscale device profiles. Othe
 
 **Save PDF** includes the assessment, measurement statistics, gamut slices, curves for the selected rendering mode, and ICC tags. Each chart has a color-matched legend. Measurement comparisons record the source file and checksums for traceability.
 
+### Interpreting a*, b*, chroma, and hue
+
+The **a\*** axis runs from green (negative) to red (positive). The **b\*** axis runs from blue (negative) to yellow (positive). Where both axes are zero, the color is neutral at that lightness.
+
+**Hue h°** is the angle in the a\*/b\* plane, measured from the positive a\* axis. The four axis directions are 0° red, 90° yellow, 180° green, and 270° blue. At 360° the angle returns to 0°. The app hides hue below C\* = 1 because the direction of a color cast is hard to interpret that close to neutral.
+
+Chroma C\* is the distance from neutral gray at the same lightness L\*. In CIELAB, calculate it as `C* = √(a*² + b*²)`. For example, a\* = 30 and b\* = 40 give C\* = 50.
+
+Select **Neutral RGB → Chroma C\*** to see how far the profile's predicted gray ramp departs from neutral. Values near zero indicate near-neutral grays. Higher values indicate a stronger color cast at that point on the ramp. Use the a\*/b\* curves or hue h° to see the direction of the cast.
+
 The disk image includes both guides. File dialogs start on the Desktop and remember the last ICC, measurement, and export folders.
 
 Filväljarna börjar på skrivbordet. Appen minns senaste ICC-mapp (delad med jämförelsen), mätmapp och sparmapp mellan starter. Den första exporten föreslås i mappen för senast öppnade fil. PDF och JSON delar sparmapp.
