@@ -22,6 +22,8 @@ Kurv- och gamutanalysen stöder enhetsprofiler för RGB, CMYK och gråskala. Öv
 
 Guiderna följer med i DMG-filen.
 
+Filväljarna börjar på skrivbordet. Appen minns senaste ICC-mapp (delad med jämförelsen), mätmapp och sparmapp mellan starter. Den första exporten föreslås i mappen för senast öppnade fil. PDF och JSON delar sparmapp.
+
 ## Kör källkoden och bygg appen
 
 Använd Python med Tkinter och LittleCMS 2. På Apple Silicon används här Homebrews LittleCMS-bibliotek. PyInstaller inkluderar det i appen.

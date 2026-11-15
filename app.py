@@ -7,6 +7,7 @@ from math import atan2, degrees
 from pathlib import Path
 import json
 import sys
+from dialog_locations import DialogLocations
 from plot_labels import lab_label, lightness_limits, tick_label
 import tkinter as tk
 from tkinter import filedialog, messagebox, ttk
@@ -61,6 +62,7 @@ def calculate(paths, reference_path, relationship, mode):
 class Analyzer:
     def __init__(self, root):
         self.root = root
+        self.locations = DialogLocations("ICC Profile Analyzer")
         self.pool = ThreadPoolExecutor(max_workers=1)
         self.paths = []
         self.reference_path = None
@@ -197,24 +199,32 @@ class Analyzer:
             box.configure(state='disabled' if busy else 'readonly')
 
     def open_profile(self, comparison=False):
-        value = filedialog.askopenfilename(parent=self.root, filetypes=[('ICC profile', ('*.icc', '*.icm'))])
+        value = filedialog.askopenfilename(
+            parent=self.root, title='Compare with ICC' if comparison else 'Open ICC',
+            initialdir=self.locations.directory('icc'), filetypes=[('ICC profile', ('*.icc', '*.icm'))],
+        )
         if value:
             paths = [*self.paths[:1], Path(value)] if comparison else [Path(value)]
             relationship = self.relationship.get()
             if self.reference_path and (not comparison or relationship in
                                         ('Training data for profile B', 'Training data for both')):
                 relationship = UNKNOWN_REFERENCE
-            self.change_inputs(paths, self.reference_path, relationship)
+            self.change_inputs(paths, self.reference_path, relationship,
+                               on_success=lambda: self.locations.remember("icc", value, opened=True))
 
     def open_reference(self):
-        value = filedialog.askopenfilename(parent=self.root, filetypes=[('CGATS', ('*.ti3', '*.cgats', '*.txt')), ('All files', '*')])
+        value = filedialog.askopenfilename(
+            parent=self.root, title='Open Measurements', initialdir=self.locations.directory('measurements'),
+            filetypes=[('CGATS', ('*.ti3', '*.cgats', '*.txt')), ('All files', '*')],
+        )
         if value:
-            self.change_inputs(self.paths, Path(value), UNKNOWN_REFERENCE)
+            self.change_inputs(self.paths, Path(value), UNKNOWN_REFERENCE,
+                               on_success=lambda: self.locations.remember("measurements", value, opened=True))
 
     def clear_reference(self):
         self.change_inputs(self.paths, None, UNKNOWN_REFERENCE)
 
-    def change_inputs(self, paths, reference_path, relationship):
+    def change_inputs(self, paths, reference_path, relationship, on_success=None):
         old_paths, old_reference = self.paths, self.reference_path
         old_relationship = self.relationship.get()
         self.paths, self.reference_path = paths, reference_path
@@ -224,9 +234,9 @@ class Analyzer:
             self.paths, self.reference_path = old_paths, old_reference
             self.relationship.set(old_relationship)
 
-        self.run(rollback=restore)
+        self.run(rollback=restore, on_success=on_success)
 
-    def run(self, rollback=None):
+    def run(self, rollback=None, on_success=None):
         if not self.paths:
             return
         self.set_buttons(True)
@@ -250,6 +260,8 @@ class Analyzer:
                 self.status.set('Analysis could not be completed.')
                 messagebox.showerror('ICC Profile Analyzer', str(error), parent=self.root)
             else:
+                if on_success:
+                    on_success()
                 self.completed_mode = mode
                 self.status.set('  |  '.join(f'{letter}: {Path(p["path"]).name}' for letter,p in zip('AB',self.profiles)))
                 self.refresh()
@@ -413,7 +425,7 @@ class Analyzer:
     def save_pdf(self):
         from analysis_pdf import save_analysis
         path = filedialog.asksaveasfilename(parent=self.root, title='Save Analysis PDF',
-            initialfile='ICC-analysis.pdf', defaultextension='.pdf', filetypes=[('PDF', '*.pdf')])
+            initialdir=self.locations.save_directory(), initialfile='ICC-analysis.pdf', defaultextension='.pdf', filetypes=[('PDF', '*.pdf')])
         if not path:
             return
         try:
@@ -423,10 +435,11 @@ class Analyzer:
         except (OSError, ValueError) as error:
             messagebox.showerror('Could not save PDF', str(error), parent=self.root)
         else:
+            self.locations.remember('save', path)
             self.status.set(f'Analysis PDF saved: {path}')
 
     def save_report(self):
-        filename = filedialog.asksaveasfilename(parent=self.root, initialfile='ICC-analysis.json',
+        filename = filedialog.asksaveasfilename(parent=self.root, initialdir=self.locations.save_directory(), initialfile='ICC-analysis.json',
                                                defaultextension='.json', filetypes=[('JSON', '*.json')])
         if not filename:
             return
@@ -446,6 +459,7 @@ class Analyzer:
         except (OSError, ValueError) as error:
             messagebox.showerror('Could not save the analysis log',str(error),parent=self.root)
         else:
+            self.locations.remember('save', filename)
             self.status.set(f'Analysis log saved: {filename}')
 
     def check_export_target(self, filename, extension):
