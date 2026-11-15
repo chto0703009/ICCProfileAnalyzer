@@ -7,6 +7,7 @@ from math import atan2, degrees
 from pathlib import Path
 import json
 import sys
+from plot_labels import lab_label, lightness_limits, tick_label
 import tkinter as tk
 from tkinter import filedialog, messagebox, ttk
 
@@ -73,10 +74,18 @@ class Analyzer:
         self.completed_mode = None
         self.reference = None
         root.title('ICC Profile Analyzer')
+        root.protocol('WM_DELETE_WINDOW', self.quit)
         root.geometry('1100x790')
         root.minsize(830, 620)
         frame = ttk.Frame(root, padding=16)
         frame.pack(fill='both', expand=True)
+        header = ttk.Frame(frame)
+        header.pack(fill='x', pady=(0, 10))
+        icon_path = Path(__file__).resolve().parent / 'resources/analyzer-header.png'
+        self.header_icon = tk.PhotoImage(file=icon_path).subsample(3)
+        ttk.Label(header, image=self.header_icon).pack(side='left', padx=(0, 8))
+        ttk.Label(header, text='ICC Profile Analyzer', font='TkHeadingFont').pack(side='left')
+        ttk.Button(header, text='Quit', command=self.quit).pack(side='right')
         row = ttk.Frame(frame)
         row.pack(fill='x')
         self.open_button = ttk.Button(row, text='Open ICC…', command=self.open_profile)
@@ -149,6 +158,10 @@ class Analyzer:
         root.configure(menu=bar)
         self.file_menu = file_menu
         self.set_buttons(False)
+
+    def quit(self):
+        self.pool.shutdown(wait=False, cancel_futures=True)
+        self.root.destroy()
 
     def text_tab(self, label):
         frame = ttk.Frame(self.tabs)
@@ -374,9 +387,14 @@ class Analyzer:
         values=[v for _,_,series in traces for v in series if v is not None]
         if not values:
             return
-        low,high = (0,360) if metric=='Hue h°' else (min(min(values),0),max(max(values),0.01))
+        if metric == 'L*':
+            limits = lightness_limits(values)
+        elif metric == 'Hue h°':
+            limits = (0, 360)
+        else:
+            limits = (min(min(values), 0), max(max(values), 0.01) * 1.03)
         x,y=axes(canvas,62,canvas.winfo_height()-42,max(1,canvas.winfo_width()-90),
-                 max(1,canvas.winfo_height()-78),(0,100),(low,high*1.03),'Ramp position (%)',metric)
+                 max(1,canvas.winfo_height()-78),(0,100),limits,'Ramp position (%)',metric)
         for i,j,series in traces:
             coords=[]
             previous=None
@@ -445,7 +463,7 @@ def volume(value):
 
 
 def lab_text(lab):
-    return f'L* {lab[0]:.2f}   a* {lab[1]:+.2f}   b* {lab[2]:+.2f}'
+    return f'L* {lab_label(lab[0])}   a* {lab_label(lab[1], signed=True)}   b* {lab_label(lab[2], signed=True)}'
 
 
 def axes(c,left,bottom,width,height,xs,ys,xlabel,ylabel):
@@ -456,8 +474,8 @@ def axes(c,left,bottom,width,height,xs,ys,xlabel,ylabel):
         yv=ys[0]+(ys[1]-ys[0])*k/5
         c.create_line(x(xv),bottom,x(xv),bottom-height,fill='#e2e8f0')
         c.create_line(left,y(yv),left+width,y(yv),fill='#e2e8f0')
-        c.create_text(x(xv),bottom+12,text=f'{xv:.3g}',fill='#334155')
-        c.create_text(left-7,y(yv),text=f'{yv:.3g}',anchor='e',fill='#334155')
+        c.create_text(x(xv),bottom+12,text=tick_label(xv),fill='#334155')
+        c.create_text(left-7,y(yv),text=tick_label(yv),anchor='e',fill='#334155')
     c.create_text(left+width/2,bottom+28,text=xlabel,fill='#152638')
     c.create_text(left,bottom-height-15,text=ylabel,fill='#152638',anchor='w')
     return x,y

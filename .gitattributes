@@ -1,2 +1,4 @@
 *.pdf binary
 *.ttf binary
+*.icns binary
+*.png binary

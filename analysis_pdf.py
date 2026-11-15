@@ -15,6 +15,7 @@ from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.platypus import Flowable, LongTable, PageBreak, Paragraph, SimpleDocTemplate, TableStyle
 
+from plot_labels import lightness_limits, tick_label
 from profile_analysis import curve_series, lightness_slice
 
 INK = colors.HexColor('#182c40')
@@ -45,7 +46,7 @@ def fmt(number):
     return '-' if number is None else f'{number:.2f}'
 
 
-def draw_axes(c, x, y, width, height, xlim, ylim, title, x_label):
+def draw_axes(c, x, y, width, height, xlim, ylim, title, x_label, divisions=4):
     def xp(v):
         return x + width * (v - xlim[0]) / (xlim[1] - xlim[0])
 
@@ -54,15 +55,15 @@ def draw_axes(c, x, y, width, height, xlim, ylim, title, x_label):
 
     c.setLineWidth(.4)
     c.setFont('Helvetica', 7)
-    for i in range(5):
-        xv = xlim[0] + (xlim[1]-xlim[0]) * i/4
-        yv = ylim[0] + (ylim[1]-ylim[0]) * i/4
+    for i in range(divisions + 1):
+        xv = xlim[0] + (xlim[1]-xlim[0]) * i/divisions
+        yv = ylim[0] + (ylim[1]-ylim[0]) * i/divisions
         c.setStrokeColor(GRID)
         c.line(xp(xv), y, xp(xv), y+height)
         c.line(x, yp(yv), x+width, yp(yv))
         c.setFillColor(INK)
-        c.drawCentredString(xp(xv), y-10, f'{xv:.3g}')
-        c.drawRightString(x-4, yp(yv)-2, f'{yv:.3g}')
+        c.drawCentredString(xp(xv), y-10, tick_label(xv))
+        c.drawRightString(x-4, yp(yv)-2, tick_label(yv))
     c.setFont('DejaVu', 8)
     c.drawString(x, y+height+8, title)
     c.setFont('Helvetica', 7)
@@ -83,9 +84,14 @@ class RampCharts(Flowable):
             values = [value for _, _, series in traces for value in series if value is not None]
             if not values:
                 continue
-            lo, hi = (0, 360) if metric == 'Hue h°' else (min(0,min(values)), max(.01,max(values)))
+            if metric == 'L*':
+                limits = lightness_limits(values)
+            elif metric == 'Hue h°':
+                limits = (0, 360)
+            else:
+                limits = (min(0, min(values)), max(.01, max(values)))
             x, y = 34 + (index % 2)*239, 343 - (index//2)*150
-            xp, yp = draw_axes(self.canv,x,y,190,107,(0,100),(lo,hi),metric,'Ramp position (%)')
+            xp, yp = draw_axes(self.canv,x,y,190,107,(0,100),limits,metric,'Ramp position (%)', divisions=5 if metric == 'L*' else 4)
             for i, component, series in traces:
                 path = self.canv.beginPath()
                 previous = None
