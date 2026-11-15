@@ -13,7 +13,7 @@ SECTION = ParagraphStyle('guide-section', parent=HEADING, spaceBefore=5, spaceAf
 
 GUIDES = {
     'SV': ('Användarguide', [
-        ('Installera på Mac', 'Öppna DMG-filen för Apple Silicon. Dra ICC Profile Analyzer till Program och öppna appen därifrån. Ikonen syns även i huvudfönstret.'),
+        ('Installera på Mac', 'Välj DMG-filen för Apple Silicon om din Mac har ett Apple-chip, eller Intel om den har en Intel-processor. Intel-versionen kräver macOS 14 eller senare. Öppna DMG-filen och dra appen till Program.'),
         ('Öppna profiler', 'Välj Open ICC och öppna en ICC- eller ICM-fil (v2 eller v4). Välj Compare with ICC för att lägga till profil B. Rött visar profil A och blått profil B.'),
         ('Läs jämförelsen', 'Comparison and Curves visar bedömningen överst. Dra i reglaget för att välja L*. Färgpunkterna visar modellens a* och b* inom ± 2,5 L*.'),
         ('Studera kurvorna', 'Välj en ramp och ett värde, exempelvis L*, kroma, nyans eller färgsteg. Rendering styr om kurvorna visar enhetsvärden direkt eller sRGB genom profilen. BPC är svartpunktskompensation.'),
@@ -26,7 +26,7 @@ GUIDES = {
         ('Tolka resultatet', 'Gamutvolymen bygger på ett konvext hölje av samplade värden. Utskriftens träffsäkerhet bedöms med oberoende mätningar under samma utskriftsvillkor.'),
     ]),
     'EN': ('User guide', [
-        ('Install on Mac', 'Open the Apple Silicon disk image. Drag ICC Profile Analyzer to Applications and open it from there. The application icon also appears in the main window.'),
+        ('Install on Mac', 'Choose the Apple Silicon disk image for a Mac with an Apple chip, or the Intel disk image for an Intel Mac. The Intel build requires macOS 14 or later. Open the disk image and drag the app to Applications.'),
         ('Open profiles', 'Choose Open ICC and select an ICC or ICM profile (v2 or v4). Choose Compare with ICC to add profile B. Red identifies profile A and blue identifies profile B.'),
         ('Read the comparison', 'Comparison and Curves shows the assessment above the charts. Drag the lightness slider to see sampled a* and b* within ± 2.5 L* of the selected level.'),
         ('Inspect the curves', 'Choose a ramp and a metric such as L*, chroma, hue or color steps. Rendering selects direct device ramps or sRGB rendered through the profile. BPC stands for black point compensation.'),

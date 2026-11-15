@@ -6,7 +6,7 @@ A standalone macOS app for numerical analysis of ICC v2 and v4 profiles. Open on
 
 ## Install on macOS
 
-Download the [Apple Silicon disk image](https://github.com/chto0703009/ICCProfileAnalyzer/releases/latest), open it, and drag the app to **Applications**.
+Download the disk image for your Mac from [GitHub Releases](https://github.com/chto0703009/ICCProfileAnalyzer/releases/latest). Choose **Apple Silicon** for Apple M-series Macs or **Intel** for Intel Macs. The Intel build requires macOS 14 or later. Open the disk image and drag the app to **Applications**.
 
 [English PDF guide](docs/ICC-Profile-Analyzer-EN.pdf) · [Swedish PDF guide](docs/ICC-Profile-Analyzer-SV.pdf)
 
