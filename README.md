@@ -8,6 +8,8 @@ A standalone macOS app for numerical analysis of ICC v2 and v4 profiles. Open on
 
 Download the Universal disk image from [GitHub Releases](https://github.com/chto0703009/ICCProfileAnalyzer/releases/latest). Open it and drag **ICC Profile Analyzer.app** to **Applications**. The same app runs on Apple Silicon and Intel Macs with macOS 14 or later. It automatically selects the matching native runtime.
 
+**If macOS blocks the app because the developer cannot be verified**, continue only if you trust the download. The app is not Apple-notarized. After trying to open it, go to **Apple menu → System Settings → Privacy & Security**, scroll to **Security**, choose **Open Anyway** for ICC Profile Analyzer, and confirm. See [Apple’s instructions](https://support.apple.com/en-us/102445).
+
 [English PDF guide](docs/ICC-Profile-Analyzer-EN.pdf) · [Swedish PDF guide](docs/ICC-Profile-Analyzer-SV.pdf)
 
 - **Assessment** shows white and black points, lightness range, estimated absolute and relative gamut volumes, and observations about neutrality and curve smoothness.
