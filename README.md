@@ -51,7 +51,7 @@ python3 -m venv .venv
   --add-data LittleCMS-LICENSE.txt:. --add-data resources:resources app.py
 ```
 
-To package the Universal app, build each architecture with its own Python environment and a matching LittleCMS library. Then run `python3 tools/build_universal.py ARM_APP INTEL_APP "ICC Profile Analyzer.app" --version 1.0.4` with the paths to the two builds. The launcher and the native runtimes are bundled together.
+To package the Universal app, build each architecture with its own Python environment and a matching LittleCMS library. Then run `python3 tools/build_universal.py ARM_APP INTEL_APP "ICC Profile Analyzer.app" --version 1.0.5` with the paths to the two builds. The launcher and the native runtimes are bundled together.
 
 Run the tests with `.venv/bin/python -m unittest`. Rebuild the PDF guides with `PYTHONPATH=. .venv/bin/python docs/build_guides.py`. On macOS, regenerate the icon with `.venv/bin/python tools/build_icon.py`.
 

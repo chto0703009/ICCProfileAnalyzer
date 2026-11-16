@@ -8,7 +8,7 @@ from pathlib import Path
 import json
 import sys
 from dialog_locations import DialogLocations
-from plot_labels import PROFILE_COLOURS, lab_label, lightness_limits, opponent_ticks, tick_label
+from plot_labels import PROFILE_COLOURS, RAMP_X_TICKS, lab_label, opponent_ticks, ramp_y_ticks, tick_label
 import tkinter as tk
 from tkinter import filedialog, messagebox, ttk
 
@@ -363,7 +363,7 @@ class Analyzer:
         width, height = canvas.winfo_width(), canvas.winfo_height()
         half = max(1, min(width - 74, height - 60) / 2)
         x, y = axes(canvas, width/2-half, height/2+half, 2*half, 2*half,
-                    (ticks[0], ticks[-1]), (ticks[0], ticks[-1]), 'a*', 'b*', ticks)
+                    ticks, ticks, 'a*', 'b*', opponent_grid=True)
         lines = []
         for i, s in enumerate(subsets):
             hue = hue_sectors(s, level)
@@ -405,14 +405,9 @@ class Analyzer:
         values=[v for _,_,series in traces for v in series if v is not None]
         if not values:
             return
-        if metric == 'L*':
-            limits = lightness_limits(values)
-        elif metric == 'Hue h°':
-            limits = (0, 360)
-        else:
-            limits = (min(min(values), 0), max(max(values), 0.01) * 1.03)
         x,y=axes(canvas,62,canvas.winfo_height()-42,max(1,canvas.winfo_width()-90),
-                 max(1,canvas.winfo_height()-78),(0,100),limits,'Ramp position (%)',metric)
+                 max(1,canvas.winfo_height()-78), RAMP_X_TICKS, ramp_y_ticks(metric, values),
+                 'Ramp position (%)', metric)
         for i,j,series in traces:
             coords=[]
             previous=None
@@ -491,16 +486,16 @@ def lab_text(lab):
     return f'L* {lab_label(lab[0])}   a* {lab_label(lab[1], signed=True)}   b* {lab_label(lab[2], signed=True)}'
 
 
-def axes(c,left,bottom,width,height,xs,ys,xlabel,ylabel,opponent_grid=None):
-    def x(v): return left+width*(v-xs[0])/(xs[1]-xs[0])
-    def y(v): return bottom-height*(v-ys[0])/(ys[1]-ys[0])
-    pairs = (zip(opponent_grid, opponent_grid) if opponent_grid else
-             ((xs[0]+(xs[1]-xs[0])*k/5, ys[0]+(ys[1]-ys[0])*k/5) for k in range(6)))
-    for xv, yv in pairs:
+def axes(c,left,bottom,width,height,x_ticks,y_ticks,xlabel,ylabel,*,opponent_grid=False):
+    def x(v): return left+width*(v-x_ticks[0])/(x_ticks[-1]-x_ticks[0])
+    def y(v): return bottom-height*(v-y_ticks[0])/(y_ticks[-1]-y_ticks[0])
+    for xv in x_ticks:
         grid = '#94a3b8' if opponent_grid and xv == 0 else '#e2e8f0'
         c.create_line(x(xv),bottom,x(xv),bottom-height,fill=grid)
-        c.create_line(left,y(yv),left+width,y(yv),fill=grid)
         c.create_text(x(xv),bottom+12,text=tick_label(xv),fill='#334155')
+    for yv in y_ticks:
+        grid = '#94a3b8' if yv == 0 and y_ticks[0] < 0 < y_ticks[-1] else '#e2e8f0'
+        c.create_line(left,y(yv),left+width,y(yv),fill=grid)
         c.create_text(left-7,y(yv),text=tick_label(yv),anchor='e',fill='#334155')
     c.create_text(left+width/2,bottom+28,text=xlabel,fill='#152638')
     c.create_text(left,bottom-height-15,text=ylabel,fill='#152638',anchor='w')

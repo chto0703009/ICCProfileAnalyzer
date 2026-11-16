@@ -15,7 +15,7 @@ from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.platypus import Flowable, LongTable, PageBreak, Paragraph, SimpleDocTemplate, TableStyle
 
-from plot_labels import PROFILE_COLOURS, lightness_limits, opponent_ticks, tick_label
+from plot_labels import PROFILE_COLOURS, RAMP_X_TICKS, opponent_ticks, ramp_y_ticks, tick_label
 from profile_analysis import curve_series, lightness_slice
 
 INK = colors.HexColor('#182c40')
@@ -69,24 +69,24 @@ def profile_key(c, right, y, profiles, *, components=False, points=False):
     c.setDash([])
 
 
-def draw_axes(c, x, y, width, height, xlim, ylim, title, x_label, divisions=4, opponent_grid=None):
+def draw_axes(c, x, y, width, height, x_ticks, y_ticks, title, x_label, *, opponent_grid=False):
     def xp(v):
-        return x + width * (v - xlim[0]) / (xlim[1] - xlim[0])
+        return x + width * (v - x_ticks[0]) / (x_ticks[-1] - x_ticks[0])
 
     def yp(v):
-        return y + height * (v - ylim[0]) / (ylim[1] - ylim[0])
+        return y + height * (v - y_ticks[0]) / (y_ticks[-1] - y_ticks[0])
 
     c.setLineWidth(.4)
     c.setFont('Helvetica', 7)
-    pairs = (zip(opponent_grid, opponent_grid) if opponent_grid else
-             ((xlim[0]+(xlim[1]-xlim[0])*i/divisions, ylim[0]+(ylim[1]-ylim[0])*i/divisions)
-              for i in range(divisions + 1)))
-    for xv, yv in pairs:
-        c.setStrokeColor(colors.HexColor('#94a3b8') if opponent_grid and xv == 0 else GRID)
+    c.setFillColor(INK)
+    zero_grid = colors.HexColor('#94a3b8')
+    for xv in x_ticks:
+        c.setStrokeColor(zero_grid if opponent_grid and xv == 0 else GRID)
         c.line(xp(xv), y, xp(xv), y+height)
-        c.line(x, yp(yv), x+width, yp(yv))
-        c.setFillColor(INK)
         c.drawCentredString(xp(xv), y-10, tick_label(xv))
+    for yv in y_ticks:
+        c.setStrokeColor(zero_grid if yv == 0 and y_ticks[0] < 0 < y_ticks[-1] else GRID)
+        c.line(x, yp(yv), x+width, yp(yv))
         c.drawRightString(x-4, yp(yv)-2, tick_label(yv))
     c.setFont('DejaVu', 8)
     c.drawString(x, y+height+8, title)
@@ -108,15 +108,10 @@ class RampCharts(Flowable):
             values = [value for _, _, series in traces for value in series if value is not None]
             if not values:
                 continue
-            if metric == 'L*':
-                limits = lightness_limits(values)
-            elif metric == 'Hue h°':
-                limits = (0, 360)
-            else:
-                limits = (min(0, min(values)), max(.01, max(values)))
             x, y = 34 + (index % 2)*239, 343 - (index//2)*150
             height = 107
-            xp, yp = draw_axes(self.canv,x,y,190,height,(0,100),limits,metric,'Ramp position (%)', divisions=5 if metric == 'L*' else 4)
+            xp, yp = draw_axes(self.canv, x, y, 190, height, RAMP_X_TICKS,
+                               ramp_y_ticks(metric, values), metric, 'Ramp position (%)')
             for i, component, series in traces:
                 path = self.canv.beginPath()
                 previous = None
@@ -152,10 +147,10 @@ class GamutCharts(Flowable):
         bound = max(5, max((abs(v) for group in groups for points in group
                            for row in points for v in row[1:]), default=0))
         ticks = opponent_ticks(bound)
-        limits = (ticks[0], ticks[-1])
         for index, (level, group) in enumerate(zip(self.levels, groups)):
             x, y = 30 + (index%3)*160, 370 - (index//3)*169
-            xp, yp = draw_axes(self.canv,x,y,109,109,limits,limits,f'L* {level} | b*','a*', opponent_grid=ticks)
+            xp, yp = draw_axes(self.canv, x, y, 109, 109, ticks, ticks,
+                               f'L* {level} | b*', 'a*', opponent_grid=True)
             profile_key(self.canv, x+109, y+128, {i for i, samples in enumerate(group) if samples}, points=True)
             for i, samples in enumerate(group):
                 self.canv.setFillColor(TRACE[i])
