@@ -7,13 +7,14 @@ from reportlab.lib.styles import ParagraphStyle
 from reportlab.platypus import Image, Paragraph, SimpleDocTemplate, Spacer
 from analysis_pdf import BODY, TITLE, HEADING, paragraph
 
-RELEASE = 'https://github.com/chto0703009/ICCProfileAnalyzer/releases/tag/v1.0.2'
+VERSION = '1.0.3'
+RELEASE = f'https://github.com/chto0703009/ICCProfileAnalyzer/releases/tag/v{VERSION}'
 ICON = Path(__file__).resolve().parents[1] / 'resources/analyzer-header.png'
 SECTION = ParagraphStyle('guide-section', parent=HEADING, spaceBefore=5, spaceAfter=3)
 
 GUIDES = {
     'SV': ('Användarguide', [
-        ('Installera på Mac', 'Välj DMG-filen för Apple Silicon om din Mac har ett Apple-chip, eller Intel om den har en Intel-processor. Intel-versionen kräver macOS 14 eller senare. Öppna DMG-filen och dra appen till Program.'),
+        ('Installera på Mac', 'Öppna Universal-DMG-filen och dra ICC Profile Analyzer.app till Program. Samma app fungerar på Apple Silicon och Intel med macOS 14 eller senare.'),
         ('Öppna profiler', 'Välj Open ICC och öppna en ICC- eller ICM-fil (v2 eller v4). Välj Compare with ICC för att lägga till profil B. Rött visar profil A och blått profil B.'),
         ('Läs jämförelsen', 'Comparison and Curves visar bedömningen överst. Dra i reglaget för att välja L*. Färgpunkterna visar modellens a* och b* inom ± 2,5 L*.'),
         ('Studera kurvorna', 'Välj en ramp och ett värde, exempelvis L*, kroma, nyans eller färgsteg. Rendering styr om kurvorna visar enhetsvärden direkt eller sRGB genom profilen. BPC är svartpunktskompensation.'),
@@ -26,7 +27,7 @@ GUIDES = {
         ('Tolka resultatet', 'Gamutvolymen bygger på ett konvext hölje av samplade värden. Utskriftens träffsäkerhet bedöms med oberoende mätningar under samma utskriftsvillkor.'),
     ]),
     'EN': ('User guide', [
-        ('Install on Mac', 'Choose the Apple Silicon disk image for a Mac with an Apple chip, or the Intel disk image for an Intel Mac. The Intel build requires macOS 14 or later. Open the disk image and drag the app to Applications.'),
+        ('Install on Mac', 'Open the Universal disk image and drag ICC Profile Analyzer.app to Applications. The same app works on Apple Silicon and Intel Macs with macOS 14 or later.'),
         ('Open profiles', 'Choose Open ICC and select an ICC or ICM profile (v2 or v4). Choose Compare with ICC to add profile B. Red identifies profile A and blue identifies profile B.'),
         ('Read the comparison', 'Comparison and Curves shows the assessment above the charts. Drag the lightness slider to see sampled a* and b* within ± 2.5 L* of the selected level.'),
         ('Inspect the curves', 'Choose a ramp and a metric such as L*, chroma, hue or color steps. Rendering selects direct device ramps or sRGB rendered through the profile. BPC stands for black point compensation.'),
@@ -45,7 +46,7 @@ for lang, (title, sections) in GUIDES.items():
     doc = SimpleDocTemplate(str(path), pagesize=A4, title=f'ICC Profile Analyzer | {title}',
                             topMargin=40, bottomMargin=40, leftMargin=57, rightMargin=57)
     story = [Image(str(ICON), width=39, height=39, hAlign='LEFT'), Spacer(1,6),
-             paragraph('ICC Profile Analyzer', TITLE), paragraph(f'{title} | 1.0.2', HEADING), Spacer(1,8)]
+             paragraph('ICC Profile Analyzer', TITLE), paragraph(f'{title} | {VERSION}', HEADING), Spacer(1,8)]
     for heading, body in sections:
         story.extend((paragraph(heading, SECTION), paragraph(body)))
     label = 'Hämta appen på GitHub' if lang == 'SV' else 'Download the app on GitHub'

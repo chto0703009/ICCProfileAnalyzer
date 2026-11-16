@@ -6,7 +6,7 @@ A standalone macOS app for numerical analysis of ICC v2 and v4 profiles. Open on
 
 ## Install on macOS
 
-Download the disk image for your Mac from [GitHub Releases](https://github.com/chto0703009/ICCProfileAnalyzer/releases/latest). Choose **Apple Silicon** for Apple M-series Macs or **Intel** for Intel Macs. The Intel build requires macOS 14 or later. Open the disk image and drag the app to **Applications**.
+Download the Universal disk image from [GitHub Releases](https://github.com/chto0703009/ICCProfileAnalyzer/releases/latest). Open it and drag **ICC Profile Analyzer.app** to **Applications**. The same app runs on Apple Silicon and Intel Macs with macOS 14 or later. It automatically selects the matching native runtime.
 
 [English PDF guide](docs/ICC-Profile-Analyzer-EN.pdf) · [Swedish PDF guide](docs/ICC-Profile-Analyzer-SV.pdf)
 
@@ -48,6 +48,8 @@ python3 -m venv .venv
   --collect-submodules scipy._external.array_api_compat \
   --add-data LittleCMS-LICENSE.txt:. --add-data resources:resources app.py
 ```
+
+To package the Universal app, build each architecture with its own Python environment and a matching LittleCMS library. Then run `python3 tools/build_universal.py ARM_APP INTEL_APP "ICC Profile Analyzer.app" --version 1.0.3` with the paths to the two builds. The launcher and the native runtimes are bundled together.
 
 Run the tests with `.venv/bin/python -m unittest`. Rebuild the PDF guides with `PYTHONPATH=. .venv/bin/python docs/build_guides.py`. On macOS, regenerate the icon with `.venv/bin/python tools/build_icon.py`.
 
