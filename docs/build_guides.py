@@ -7,7 +7,7 @@ from reportlab.lib.styles import ParagraphStyle
 from reportlab.platypus import Image, Paragraph, SimpleDocTemplate, Spacer
 from analysis_pdf import BODY, TITLE, HEADING, paragraph
 
-VERSION = '1.0.3'
+VERSION = '1.0.4'
 RELEASE = f'https://github.com/chto0703009/ICCProfileAnalyzer/releases/tag/v{VERSION}'
 ICON = Path(__file__).resolve().parents[1] / 'resources/analyzer-header.png'
 SECTION = ParagraphStyle('guide-section', parent=HEADING, spaceBefore=3, spaceAfter=3)
@@ -25,7 +25,7 @@ GUIDES = {
         ('Jämför mot en mätfil', 'Välj Open Measurements och ange en CGATS- eller TI3-fil med skrivar-RGB (0-100) och Lab D50 eller XYZ D50 (Y-skala 0-100). Ange om underlaget är en oberoende mätning eller träningsdata. ΔE00 jämför samma RGB i absolut Lab D50.'),
         ('Spara rapporten', 'Välj Save PDF för en engelsk rapport med jämförelse, L*-snitt, alla kurvor för valt återgivningsläge, mätstatistik och ICC-taggar. Save JSON sparar en maskinläsbar logg.'),
         ('Avsluta', 'Klicka på Quit uppe till höger i huvudfönstret.'),
-        ('Senast använda mappar', 'Filväljarna börjar på skrivbordet. Appen minns ICC-mapp, mätmapp och sparmapp mellan starter. Den första exporten föreslås i mappen för senaste öppnade fil.'),
+        ('Filnamn och mappar', 'Exporten föreslår profilnamn_Analyze.pdf eller profilnamn_Analyze.json från filen vald med Open ICC. Appen minns ICC-mapp, mätmapp och sparmapp mellan starter.'),
         ('Tolka resultatet', 'Gamutvolymen bygger på ett konvext hölje av samplade värden. Utskriftens träffsäkerhet bedöms med oberoende mätningar under samma utskriftsvillkor.'),
     ]),
     'EN': ('User guide', [
@@ -39,7 +39,7 @@ GUIDES = {
         ('Compare with measurements', 'Choose Open Measurements and select a CGATS or TI3 file containing device RGB (0-100) and Lab D50 or XYZ D50 (Y scale 0-100). Record whether the file contains independent or training measurements. ΔE00 compares matching RGB values in absolute Lab D50.'),
         ('Save the report', 'Choose Save PDF for an English report with the comparison, lightness slices, all curves for the selected rendering mode, measurement statistics and ICC tags. Save JSON exports a machine-readable log.'),
         ('Quit', 'Click Quit at the top right of the main window.'),
-        ('Recent folders', 'File pickers start on the Desktop. The app remembers your ICC, measurement and save folders between launches. The first export defaults to the last opened file’s folder.'),
+        ('Filenames and folders', 'Export defaults to profile_Analyze.pdf or profile_Analyze.json, based on the filename selected with Open ICC. The app remembers the ICC, measurement and save folders between launches.'),
         ('Interpret the results', 'The gamut volume is a convex hull estimate from sampled values. Use independent measurements under matching print conditions to assess print accuracy.'),
     ]),
 }

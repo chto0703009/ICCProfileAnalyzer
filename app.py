@@ -428,10 +428,15 @@ class Analyzer:
         if metric=='a* and b*':
             canvas.create_text(70,24,text='Solid: a*   Dashed: b*',anchor='nw',fill='#334155')
 
+    def report_filename(self, extension):
+        profile = Path(self.profiles[0]['path'])
+        return f'{profile.stem}_Analyze{extension}'
+
     def save_pdf(self):
         from analysis_pdf import save_analysis
         path = filedialog.asksaveasfilename(parent=self.root, title='Save Analysis PDF',
-            initialdir=self.locations.save_directory(), initialfile='ICC-analysis.pdf', defaultextension='.pdf', filetypes=[('PDF', '*.pdf')])
+            initialdir=self.locations.save_directory(), initialfile=self.report_filename('.pdf'),
+            defaultextension='.pdf', filetypes=[('PDF', '*.pdf')])
         if not path:
             return
         try:
@@ -445,7 +450,7 @@ class Analyzer:
             self.status.set(f'Analysis PDF saved: {path}')
 
     def save_report(self):
-        filename = filedialog.asksaveasfilename(parent=self.root, initialdir=self.locations.save_directory(), initialfile='ICC-analysis.json',
+        filename = filedialog.asksaveasfilename(parent=self.root, initialdir=self.locations.save_directory(), initialfile=self.report_filename('.json'),
                                                defaultextension='.json', filetypes=[('JSON', '*.json')])
         if not filename:
             return

@@ -32,7 +32,7 @@ Chroma C\* is the distance from neutral gray at the same lightness L\*. In CIELA
 
 Select **Neutral RGB → Chroma C\*** to see how far the profile's predicted gray ramp departs from neutral. Values near zero indicate near-neutral grays. Higher values indicate a stronger color cast at that point on the ramp. Use the a\*/b\* curves or hue h° to see the direction of the cast.
 
-The disk image includes both guides. File dialogs start on the Desktop and remember the last ICC, measurement, and export folders.
+The disk image includes both guides. File dialogs start on the Desktop and remember the last ICC, measurement, and export folders. PDF and JSON exports default to `<profile>_Analyze.pdf` and `<profile>_Analyze.json`, using the filename selected with **Open ICC…**.
 
 Filväljarna börjar på skrivbordet. Appen minns senaste ICC-mapp (delad med jämförelsen), mätmapp och sparmapp mellan starter. Den första exporten föreslås i mappen för senast öppnade fil. PDF och JSON delar sparmapp.
 
@@ -51,7 +51,7 @@ python3 -m venv .venv
   --add-data LittleCMS-LICENSE.txt:. --add-data resources:resources app.py
 ```
 
-To package the Universal app, build each architecture with its own Python environment and a matching LittleCMS library. Then run `python3 tools/build_universal.py ARM_APP INTEL_APP "ICC Profile Analyzer.app" --version 1.0.3` with the paths to the two builds. The launcher and the native runtimes are bundled together.
+To package the Universal app, build each architecture with its own Python environment and a matching LittleCMS library. Then run `python3 tools/build_universal.py ARM_APP INTEL_APP "ICC Profile Analyzer.app" --version 1.0.4` with the paths to the two builds. The launcher and the native runtimes are bundled together.
 
 Run the tests with `.venv/bin/python -m unittest`. Rebuild the PDF guides with `PYTHONPATH=. .venv/bin/python docs/build_guides.py`. On macOS, regenerate the icon with `.venv/bin/python tools/build_icon.py`.
 
